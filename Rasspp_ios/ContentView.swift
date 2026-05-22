@@ -1,162 +1,150 @@
 import SwiftUI
+import WebKit
 
-// MARK: - 1. PANTALLA PRINCIPAL (EL ESQUELETO VISUAL)
 struct ContentView: View {
-    // Estas variables de estado controlan las pantallas de forma 100% visual
-    @State private var estaAutenticado = false
-    @State private var estaCargando = false
-    @State private var correoInstitucional = "coordinacion.software@ulsa.edu.mx"
-    @State private var jefeActual = "Ing. Roberto Martínez"
-    @State private var carreraActual = "Ingeniería de Software y Sistemas Computacionales"
+    // Controla si mostramos la pantalla de bienvenida o la Web
+    @State private var mostrarWeb = false
+    @State private var animarLogo = false
     
     var body: some View {
-        Group {
-            if estaAutenticado {
-                // DASHBOARD VISUAL DEL JEFE DE CARRERA
+        ZStack {
+            if mostrarWeb {
+                // PANTALLA 2: EL WEBVIEW DE RASSPP
                 NavigationStack {
-                    VStack(alignment: .leading) {
-                        // Banner del perfil simulado
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Bienvenido, \(jefeActual)")
-                                .font(.title2.bold())
-                            Text(carreraActual)
-                                .font(.subheadline)
-                                .foregroundColor(.blue)
-                        }
-                        .padding([.horizontal, .top])
-                        
-                        if estaCargando {
-                            Spacer()
-                            HStack {
-                                Spacer()
-                                ProgressView("Simulando consulta a la API de RASSPP...")
-                                Spacer()
-                            }
-                            Spacer()
-                        } else {
-                            // Lista estática simulada de alumnos
-                            List {
-                                ElementoListaAlumno(nombre: "Carlos Mendoza Ruiz", detalle: "Semestre: 6° • Servicio Social", estatus: "Pendiente")
-                                ElementoListaAlumno(nombre: "Ana Valeria Gómez", detalle: "Semestre: 7° • Prácticas Profesionales", estatus: "Aprobado")
-                                ElementoListaAlumno(nombre: "Diego Alejandro Torres", detalle: "Semestre: 8° • Prácticas Profesionales", estatus: "Pendiente")
-                            }
-                            .listStyle(.insetGrouped)
-                        }
-                    }
-                    .navigationTitle("RASSPP Admin")
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Cerrar Sesión", role: .destructive) {
-                                estaAutenticado = false
+                    WebViewInstitucional(url: URL(string: "https://santipoev.web.app/")!)
+                        .edgesIgnoringSafeArea(.bottom)
+                        .navigationTitle("Portal RASSPP")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                Button(action: { withAnimation { mostrarWeb = false } }) {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: "chevron.left")
+                                        Text("Volver")
+                                    }
+                                    .fontWeight(.medium)
+                                }
                             }
                         }
-                    }
                 }
-                
+                .transition(.move(edge: .trailing)) // Animación de empuje lateral
             } else {
-                // PANTALLA DE LOGIN (DISEÑO DE ENTRA ID SIMULADO)
-                VStack(spacing: 25) {
-                    Spacer()
+                // PANTALLA 1: LANDING PAGE (BIENVENIDA)
+                renderLandingPage()
+                    .transition(.move(edge: .leading))
+            }
+        }
+    }
+    
+    // MARK: - DISEÑO DE LA PANTALLA DE ENTRADA
+    @ViewBuilder
+    func renderLandingPage() -> some View {
+        ZStack {
+            // Fondo con los colores institucionales
+            LinearGradient(
+                colors: [Color.white, Color.blue.opacity(0.1), Color.blue.opacity(0.2)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 40) {
+                Spacer()
+                
+                // CONTENEDOR DEL LOGO
+                VStack(spacing: 20) {
+                    // Aquí llamamos a la imagen que subiste a Assets
+                    Image("LogoApp")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 180, height: 180)
+                        .shadow(color: .blue.opacity(0.2), radius: 20, x: 0, y: 10)
+                        .scaleEffect(animarLogo ? 1.0 : 0.8)
+                        .opacity(animarLogo ? 1.0 : 0.0)
                     
-                    VStack(spacing: 10) {
+                    VStack(spacing: 8) {
                         Text("RASSPP")
-                            .font(.system(size: 42, weight: .black, design: .rounded))
-                            .foregroundColor(.blue)
-                        Text("Control de Prácticas y Servicio Social")
-                            .font(.subheadline)
+                            .font(.system(size: 48, weight: .black, design: .rounded))
+                            .foregroundStyle(
+                                LinearGradient(colors: [.blue, .blue.opacity(0.8)], startPoint: .top, endPoint: .bottom)
+                            )
+                        
+                        Text("Gestión de Prácticas y Servicio Social")
+                            .font(.headline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
-                    
-                    VStack(spacing: 15) {
-                        Text("Inicia sesión con tu cuenta institucional de Microsoft")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        TextField("Correo Institucional", text: $correoInstitucional)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                            .padding(.horizontal, 30)
-                        
-                        Button(action: {
-                            // Dispara la animación de carga y el cambio de pantalla puramente visual
-                            estaCargando = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                estaCargando = false
-                                estaAutenticado = true
-                            }
-                        }) {
-                            HStack {
-                                if estaCargando {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                } else {
-                                    Image(systemName: "lock.shield.fill")
-                                    Text("Autenticar con Entra ID")
-                                        .bold()
-                                }
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .background(estaCargando ? Color.gray : Color.blue)
-                            .cornerRadius(10)
-                        }
-                        .disabled(estaCargando || correoInstitucional.isEmpty)
-                        .padding(.horizontal, 30)
-                    }
-                    .padding(.vertical, 30)
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .cornerRadius(16)
-                    .padding(.horizontal, 20)
-                    
-                    Spacer()
                 }
+                
+                Spacer()
+                
+                // BOTÓN DE ACCESO DIRECTO
+                Button(action: {
+                    withAnimation(.spring()) {
+                        mostrarWeb = true
+                    }
+                }) {
+                    HStack(spacing: 15) {
+                        Text("Entrar a la Aplicación")
+                            .font(.title3.bold())
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.title3)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 65)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(LinearGradient(colors: [.blue, Color.blue.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
+                    )
+                    .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+                }
+                .padding(.horizontal, 30)
+                
+                // Info del Proyecto / Universidad
+                VStack(spacing: 5) {
+                    Text("Universidad de La Salle")
+                        .font(.caption.bold())
+                        .foregroundColor(.secondary)
+                    Text("Proyecto Integrador • Ingeniería de Software")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary.opacity(0.8))
+                }
+                .padding(.bottom, 10)
+            }
+            .padding()
+        }
+        .onAppear {
+            // Animación de entrada suave del logo
+            withAnimation(.easeOut(duration: 0.8)) {
+                animarLogo = true
             }
         }
     }
 }
 
-// MARK: - 2. COMPONENTES AUXILIARES DE DISEÑO
-struct ElementoListaAlumno: View {
-    let nombre: String
-    let detalle: String
-    let estatus: String
+// MARK: - COMPONENTE WEBVIEW (MODERNO)
+struct WebViewInstitucional: UIViewRepresentable {
+    let url: URL
     
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(nombre)
-                    .font(.headline)
-                Text(detalle)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            Spacer()
-            
-            Text(estatus)
-                .font(.caption2.bold())
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(colorParaEstatus(estatus).opacity(0.15))
-                .foregroundColor(colorParaEstatus(estatus))
-                .clipShape(Capsule())
-        }
-        .padding(.vertical, 4)
+    func makeUIView(context: Context) -> WKWebView {
+        let configuracion = WKWebViewConfiguration()
+        let preferenciasWeb = WKWebpagePreferences()
+        preferenciasWeb.allowsContentJavaScript = true
+        configuracion.defaultWebpagePreferences = preferenciasWeb
+        
+        let webView = WKWebView(frame: .zero, configuration: configuracion)
+        webView.allowsBackForwardNavigationGestures = true
+        return webView
     }
     
-    private func colorParaEstatus(_ estatus: String) -> Color {
-        switch estatus {
-        case "Aprobado": return .green
-        case "Pendiente": return .orange
-        case "Rechazado": return .red
-        default: return .gray
-        }
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        let peticion = URLRequest(url: url)
+        uiView.load(peticion)
     }
 }
 
-// MARK: - 3. VISTA DE PREVISUALIZACIÓN (PREVIEW)
+// MARK: - PREVIEW
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
