@@ -1,0 +1,31 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/layoutLogin"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:gravity="center">
+
+        <EditText android:id="@+id/etEmail" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Correo" />
+        <Button android:id="@+id/btnLogin" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Iniciar Sesión (Entra ID)" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutDashboard"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <ImageView android:id="@+id/imgPerfil" android:layout_width="100dp" android:layout_height="100dp" android:layout_gravity="center" android:src="@android:drawable/sym_def_app_icon" />
+        <Button android:id="@+id/btnCambiarFoto" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Cambiar Foto" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Datos de Alumnos" />
+        <Button android:id="@+id/btnLogout" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Cerrar Sesión" />
+    </LinearLayout>
+</FrameLayout>
